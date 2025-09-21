@@ -14,7 +14,7 @@ describe('User', () => {
       const user = {
         username: 'sergkudinov',
         firstname: 'Sergei',
-        lastname: 'Kudinov'
+        lastname: 'Kudinov' 
       }
 
       userController.create(user, (err, result) => {
