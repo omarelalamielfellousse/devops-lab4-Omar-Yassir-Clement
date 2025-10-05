@@ -1,0 +1,77 @@
+name: CI (Node + Redis)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # Annule les exécutions en double sur la même branche
+    concurrency:
+      group: ci-${{ github.ref }}
+      cancel-in-progress: true
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    defaults:
+      run:
+        working-directory: modules/04.continuous-testing/lab
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: modules/04.continuous-testing/lab/package-lock.json
+
+      - name: Wait for Redis to be ready
+        run: |
+          for i in {1..30}; do
+            if redis-cli -h 127.0.0.1 ping | grep -q PONG; then
+              echo "Redis is up"; break
+            fi
+            echo "Waiting for Redis... ($i/30)"; sleep 1
+          done
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        env:
+          CI: true
+        run: npm test
+
+      - name: Archive test results (optional)
+        if: always()
+        run: |
+          mkdir -p ../artifacts
+          if [ -d coverage ]; then cp -r coverage ../artifacts/; fi
+        shell: bash
+
+      - name: Upload artifact (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-${{ matrix.node-version }}
+          path: modules/04.continuous-testing/artifacts
