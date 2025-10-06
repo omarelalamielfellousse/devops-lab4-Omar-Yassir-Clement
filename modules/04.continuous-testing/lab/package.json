@@ -1,14 +1,21 @@
 {
   "name": "ece-userapi",
   "version": "1.0.0",
+  "private": true,
   "description": "User API web application",
   "main": "src/index.js",
+  "engines": {
+    "node": ">=18 <21",
+    "npm": ">=9"
+  },
   "scripts": {
     "start": "node src/index.js",
-    "test": "mocha test/*.js"
+    "start:dev": "node src/index.js",
+    "test": "mocha ./test/**/*.js",
+    "lint": "eslint ."
   },
   "author": "Sergei Kudinov",
-  "license": "",
+  "license": "UNLICENSED",
   "dependencies": {
     "body-parser": "^1.20.2",
     "express": "^4.17.2",
@@ -24,5 +31,19 @@
   },
   "mocha": {
     "timeout": 10000
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "mocha": true,
+      "es2021": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 12
+    },
+    "rules": {}
   }
 }
